@@ -44,6 +44,8 @@ def transcript_coord_to_genome_coord(hang, cigar, tr_coord):
             genome_output += int(value)
         elif cigar_type == "I":
             tr_remain -= min(tr_remain, int(value))
+    if tr_remain > 0:
+        return str(-1)
     return str(genome_output)
 
 def main(argv):
@@ -53,13 +55,17 @@ def main(argv):
     if not args.input_file_1_path:
         logging.error("---- invalid input_file_1")
     elif not os.path.isfile(args.input_file_1_path):
-        logging.error("---- empty input file 1")
+        logging.error("---- input file 1 does not exist")
+    elif os.stat(args.input_file_1_path).st_size == 0:
+        logging.error("---- input file 1 is empty")
     else:
         input_file_1_path = args.input_file_1_path 
     if not args.input_file_2_path:
         logging.error("---- invalid input_file_2")
     elif not os.path.isfile(args.input_file_2_path): 
-        logging.error("---- empty input file 2")
+        logging.error("---- input file 2 does not exist")
+    elif os.stat(args.input_file_2_path).st_size == 0:
+        logging.error("---- input file 2 is empty")
     else:
         input_file_2_path = args.input_file_2_path
     if not args.output_file_path:
@@ -69,7 +75,7 @@ def main(argv):
     # set up the log file
     output_dir = "/".join(output_file_path.split("/")[0:-1])
     log_file_name = '{}/transcript_to_genomics_coord.log'.format(output_dir)
-    logging.basicConfig(filename=log_file_name, level = logging.INFO, format = '%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    logging.basicConfig(filename=log_file_name, level = logging.DEBUG, format = '%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     logger = logging.getLogger('trans_to_genome')
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
@@ -77,17 +83,26 @@ def main(argv):
     output_file = open(output_file_path, "w")
     # read input_file_1 as a pandas df
     input_file_1 = pd.read_csv(input_file_1_path, sep="\t", header = None, index_col=0)
-    # read input_file_2 line by line, calculate genomic coord, and write to output_file line by line 
-    input_file_2 = open(input_file_2_path, "r")
-    for line in input_file_2:
-        trans_ID, tr_coord = line.strip().split("\t")[0], line.strip().split("\t")[1]
-        tr_chr, hang, cigar = input_file_1.loc[trans_ID, 1], input_file_1.loc[trans_ID, 2], input_file_1.loc[trans_ID, 3]
-        genome_coord = transcript_coord_to_genome_coord(hang, cigar, tr_coord)
-        L = [trans_ID, tr_coord, tr_chr, genome_coord]
-        logger.info('\t'.join(L))
-        output_file.write('\t'.join(L))
-        output_file.write('\n')
-    input_file_2.close()
+    # check if valid number of columns
+    if input_file_1.shape[1] != 3: # transcript ID as index, the input_file_1 has 3 columns
+        print("---- input file 1 contains wrong number of columns")
+        logging.error("---- input file 1 contains wrong number of columns")
+    else:
+        # read input_file_2 line by line, calculate genomic coord, and write to output_file line by line 
+        input_file_2 = open(input_file_2_path, "r")
+        for line in input_file_2:
+            if len(line.strip().split("\t")) < 2:
+                print("---- input file 2 contains wrong number of columns")
+                logging.error("---- input file 2 contains wrong number of columns")
+            else:
+                trans_ID, tr_coord = line.strip().split("\t")[0], line.strip().split("\t")[1]
+                tr_chr, hang, cigar = input_file_1.loc[trans_ID, 1], input_file_1.loc[trans_ID, 2], input_file_1.loc[trans_ID, 3]
+                genome_coord = transcript_coord_to_genome_coord(hang, cigar, tr_coord)
+                L = [trans_ID, tr_coord, tr_chr, genome_coord]
+                logger.info('\t'.join(L))
+                output_file.write('\t'.join(L))
+                output_file.write('\n')
+        input_file_2.close()
     output_file.close()
     logger.info("--- the conversion is complete")
 

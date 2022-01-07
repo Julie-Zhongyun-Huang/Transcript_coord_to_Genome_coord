@@ -11,10 +11,12 @@ python3 trans_to_genome.py \
 
 ## Assumptions
 Assumption 1: I assumed "Input file 2", column 2 to only contain valid transcript coordinates. Exception happens when the coordinate is larger than the total length of the cigar string (sum of M and I numbers of the string). When the coordinate is invalid, for the specific query row, I output "-1" to the column 4 space, indicating the invalid coordinate. Please see example/input_file_2.2.txt row 3, and corresponding example/output_file_2.txt row 3. 
+
 Assumption 2: I assumed "input file 1" to contain limited number of transcripts, while "input file 2" the query list is long. I have thus read in the "input file 1" as a pandas dataframe for faster look up using the transcript ID, and to obtain chromosome, start coordinate and CIGAR information more quickly. However, the memory efficiency is not ideal if the "input file 1" is too large. If the "input file 1" is a large file, while the "input file 2" has fewer queries, consider to read in "input file 1" line by line instead of pd.dataframe, use "startwith" to screen for the line that contains the trasncript ID in the query, and perform the same functions. Depending on the sizes of "input file 1" and "input file 2", I may consider to sort the files first to facilitate faster searching of "chromosome", "start_coord" and "CIGAR" information for each query.  
 
 ## Key strength and weakness
 Strength: only reads in the "input file 1" once, and performs quick look up for transcript information. High time efficiency when performing batch query with long "input file 2". Logging is used to report error messages when the input file is not valid. 
+
 Weakness: uses memory to save the "input file 1" as a dataframe. Also not time efficient when "input file 1" contains a large number of transcripts, while the query only limited to few transcripts. 
 
 ## Input parameters

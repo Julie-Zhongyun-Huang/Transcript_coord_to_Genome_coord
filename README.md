@@ -30,6 +30,13 @@ Weakness: uses memory to save the "input file 1" as a dataframe. Also not time e
 
 ## Example
 Please see the example folder
+Created examples for the following cases
+1. Both input_file_1 and input_file_2 valid
+2. Input_file_1 is empty
+3. Input_file_1 contains wrong number of columns
+4. Input_file_2 is empty
+5. Input_file_2 contains wrong numbver of columns
+6. Input_file_2 has the transcript coord in the query larger than the CIGAR string allows
 
 ## Contact
 This module was developed by Julie Huang: zhongyunbell@gmail.com
